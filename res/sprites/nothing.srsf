@@ -1,0 +1,7 @@
+id=nothing
+img=char/nothingidle.png
+spritewidth=5
+spriteheight=1
+animation=idle,3,100
+animation=idle_front,0,100
+animation=idle_back,4,100

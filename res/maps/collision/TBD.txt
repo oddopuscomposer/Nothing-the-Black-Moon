@@ -1,0 +1,2 @@
+Put collision maps here.
+[png] [jpg] [bmp] [gif]

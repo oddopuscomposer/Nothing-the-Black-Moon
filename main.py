@@ -1,5 +1,5 @@
 import sys, os
-BUILD_VERSION = '0.0.2'
+BUILD_VERSION = '0.0.3'
 
 # Command line arguments
 if len(sys.argv) > 1:
@@ -11,7 +11,8 @@ from PIL import Image
 from screeninfo import get_monitors
 from level import *
 from intro_level import IntroLevel
-from smap import load_map
+from constants import *
+from maplevel import *
 
 pygame.init()
 pygame.mixer.pre_init(22050, -16, 1, 2048)

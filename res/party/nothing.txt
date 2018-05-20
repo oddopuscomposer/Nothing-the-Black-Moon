@@ -1,0 +1,15 @@
+name=Nothing
+HP=15,15
+LVL=1
+EXP=0
+NLV=35
+STR=7
+WIS=2
+INT=2
+DEF=0
+equipment=None,None,None,None
+right_handed=True
+bag_size=5
+bag=,
+sprite=nothing
+augments=None,None
