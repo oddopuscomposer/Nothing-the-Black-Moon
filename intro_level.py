@@ -71,7 +71,8 @@ class IntroLevel(Level):
                        'alignment': [0.5, 0]})
 
         self.cr_images = [pygame.image.load('res/intro/prog.png'),
-                          pygame.image.load('res/intro/credit1.png')]
+                          pygame.image.load('res/intro/credit1.png'),
+                          pygame.image.load('res/intro/credit2.png')]
 
     def animate(self, screen, fps):
         if self.state == 0:
