@@ -2,7 +2,7 @@
 An action RPG about death. You know. The typical thing.
 
 # Credits
-- Alula Lightdini (project head, music)
+- Alan Bro (project head)
+- Alula Lightdini (music & story)
 - Mister Epic (lead programmer)
-- Alan Bro
 - Edd Not Yet (art)
