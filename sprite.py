@@ -231,115 +231,179 @@ spr_width, spr_height - DIMENSIONS OF SPRITESHEET FRAMES
                 glob[key] = variables[key]
             exec(self.update_func, glob, locals())
 
-# Load sprite from file, lines, or pre-existing sprite
-def load_sprite(filename, pos = [0, 0]):
-    if type(filename) == GameSprite:
-        return filename.copy()
-    else:
-        try:
-            f = open(filename, 'r')
-            lines = f.readlines()
-            f.close()
-        except Exception:
-            lines = filename
+if __name__ == '__main__': # Sprite test
+    from level import Level
+    from constants import SPRITE_LIBRARY
+    import time, traceback
 
-        sprite_dict = {'initialframe': 0, 'class': "GameSprite"}
-        temp_variable = {}
-    for line in lines:
-        if len(line.split('=')) > 1:
-            key = line.split('=')[0]
-            val = line.split('=')[1]
+    try:
+        pygame.init()
 
-            if val[-1] == '\n':
-                val = val[0:len(val) - 1]
+        screen = pygame.display.set_mode([640, 360])
+        pygame.display.set_caption("SGE Sprite Test")
 
-            if key == 'animation':
-                args = val.split(',')
-                anim = {}
-                anim['id'] = args[0]
-                anim['frames'] = args[1:len(args) - 1]
-                frames = []
-                for frame in anim['frames']:
-                    try:
-                        frames.append(int(frame))
-                    except ValueError:
-                        if frame.find('spritesheet<') == 0:
-                            frame = frame.replace('spritesheet<','')
-                            frame = frame.replace('>','')
-                            frame = frame.split('|')
+        FPS = 60
+        ELAPSED = time.time()
 
-                            sheet_img = pygame.image.load('res/sprites/' + frame[0])
-                            sheet_w, sheet_h = sheet_img.get_rect().w, sheet_img.get_rect().h
-                            image_w, image_h = sheet_w / int(frame[1]), sheet_h / int(frame[2])
-                            
-                            frames = frames + create_spritesheet_animation('res/sprites/' + frame[0],
-                                                                           image_w, image_h,
-                                                                           int(frame[1]), int(frame[2]))
-                        else:
-                            frames.append(pygame.image.load('res/sprites/' + frame))
-                            
-                anim['frames'] = frames
-                anim['time'] = int(args[-1])
-                            
-                if 'animations' in sprite_dict.keys():
-                    sprite_dict['animations'].append(anim)
-                else:
-                    sprite_dict['animations'] = [anim]
+        KEYS = SPRITE_LIBRARY.keys()
+        ID = 0
+
+        lv = Level('Sprite Test')
+        lv.background_color = [85, 85, 85]
+        lv.add_text({'id': "spriteNameShad",
+                     'text': "Sprite " + str(ID) + ' <' + KEYS[ID] + '>',
+                     'color': [0, 0, 0],
+                     'size': 26,
+                     'font': 'res/fonts/consolas.ttf',
+                     'alignment': [0, 0],
+                     'position': [2, 4]})
+        lv.add_text({'id': "spriteName",
+                     'text': "Sprite " + str(ID) + ' <' + KEYS[ID] + '>',
+                     'color': [255, 255, 255],
+                     'size': 26,
+                     'font': 'res/fonts/consolas.ttf',
+                     'alignment': [0, 0],
+                     'position': [2, 2]})
+
+        lv.add_text({'id': "spriteFrameShad",
+                     'text': "Frame " + str(ID),
+                     'color': [0, 0, 0],
+                     'size': 26,
+                     'font': 'res/fonts/consolas.ttf',
+                     'alignment': [0, 0],
+                     'position': [2, 28]})
+        lv.add_text({'id': "spriteFrame",
+                     'text': "Frame " + str(ID),
+                     'color': [255, 255, 255],
+                     'size': 26,
+                     'font': 'res/fonts/consolas.ttf',
+                     'alignment': [0, 0],
+                     'position': [2, 26]})
+
+        lv.add_sprite(SPRITE_LIBRARY[KEYS[ID]])
+        lv.sprites[0].pos = [120, 300]
+        lv.sprites[0].scale = 2
+        SELECTED = 0
+        ANIMS = lv.sprites[0].animations.keys()
+        ANIMS.sort()
+
+        for spr in SPRITE_LIBRARY.keys():
+            SPRITE_LIBRARY[spr].update_func = None
+            SPRITE_LIBRARY[spr].visible = True
+
+        running = True
+        while running:
+            pygame.display.flip()
+
+            txt = "Sprite " + hex(ID).replace('0x', '').upper() + ' <' + KEYS[ID] + '>'
+            lv.find_text('spriteName')['text'] = txt
+            lv.find_text('spriteNameShad')['text'] = txt
+
+            txt = "Frame "
+            if type(lv.sprites[0].frame) == int:
+                txt = txt + str(lv.sprites[0].frame)
             else:
-                if key in ['spritewidth', 'spriteheight', 'initialframe', 'movespeed']:
-                    val = int(val)
-                if key in ['colliderect', 'collide_rect', 'interactrect', 'interact_rect']:
-                    try:
-                        val = [int(val.split(',')[0]), int(val.split(',')[1]), int(val.split(',')[2]), int(val.split(',')[3])]
-                    except Exception:
-                        pass
-                if key in ['hardcollision', 'hidden']:
-                    val = val in ['True', 't', 'Yes', 'yes', 'y', 'T', 'Y', 'true', "TRUE", "YES"]
-                if key == 'temp_variable':
-                    temp_variable[val.split('|')[0]] = val.split('|')[1]
-                    
-                sprite_dict[key] = val
-        
-    surfrect = pygame.image.load('res/sprites/' + sprite_dict['img']).get_rect()
-    spr = GameSprite('res/sprites/' + sprite_dict['img'], pos,
-                     surfrect.w / sprite_dict['spritewidth'], surfrect.h / sprite_dict['spriteheight'],
-                     sprite_dict['spritewidth'], sprite_dict['spriteheight'],
-                     name=sprite_dict['id'])
-    spr.temp_variable = {}
-    if 'animations' in sprite_dict.keys():
-        for anim in sprite_dict['animations']:
-            spr.add_animation(anim['id'], anim['frames'], anim['time'])
+                txt = txt + '0'
+            
+            if lv.sprites[0].animation != None:
+                txt = txt + ' <AF ' + str(lv.sprites[0].animation_frame) + ', T ' + str(int(lv.sprites[0].animation_lengths[lv.sprites[0].animation] * 1000)) + ' ms'
+                if lv.sprites[0].paused:
+                    txt = txt + ', P>'
+                else:
+                    txt = txt + '>'
+            lv.find_text('spriteFrame')['text'] = txt
+            lv.find_text('spriteFrameShad')['text'] = txt
+            lv.animate(screen, FPS)
+            
+            if len(ANIMS) > 0:
+                f = pygame.font.Font('res/fonts/consolas.ttf', 26)
 
-    if 'movespeed' in sprite_dict.keys():
-        spr.movement_speed = sprite_dict['movespeed']
+                screen.blit(f.render("ANIMATIONS:", True, [0, 0, 0]), [640 - f.size("ANIMATIONS:")[0], 4])
+                screen.blit(f.render("ANIMATIONS:", True, [255, 255, 0]), [640 - f.size("ANIMATIONS:")[0], 2])
 
-    if 'colliderect' in sprite_dict.keys():
-        spr.collide_rect = pygame.Rect(sprite_dict['colliderect'])
-    if 'collide_rect' in sprite_dict.keys():
-        spr.collide_rect = pygame.Rect(sprite_dict['colliderect'])
+                y = 26
+                for animation in ANIMS:
+                    clr = [255, 255, 255]
+                    if animation == lv.sprites[0].animation and ANIMS[SELECTED] == animation:
+                        clr = [255, 0, 0]
+                    elif animation == lv.sprites[0].animation:
+                        clr = [255, 128, 0]
+                    elif ANIMS[SELECTED] == animation:
+                        clr = [40, 122, 255]
+                        
+                    screen.blit(f.render(animation, True, lv.find_text("spriteNameShad")['color']), [640 - f.size(animation)[0] - 4, y + 2])
+                    screen.blit(f.render(animation, True, clr), [640 - f.size(animation)[0] - 4, y])
 
-    if 'interactrect' in sprite_dict.keys():
-        spr.temp_variable['interact_rect'] = pygame.Rect(sprite_dict['interactrect'])
-    if 'interact_rect' in sprite_dict.keys():
-        spr.temp_variable['interact_rect'] = pygame.Rect(sprite_dict['interactrect'])
+                    y += 26
+            
+            try:
+                FPS = 1 / (time.time() - ELAPSED)
+            except ZeroDivisionError:
+                FPS = 100
+            ELAPSED = time.time()
 
-    if 'hidden' in sprite_dict.keys():
-        spr.visible = not sprite_dict['hidden']
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-    if 'zorder' in sprite_dict.keys():
-        spr.z_order = sprite_dict['zorder']
-        
-    if 'update' in sprite_dict.keys() or 'update_function' in sprite_dict.keys():
-        if 'update' in sprite_dict.keys():
-            loc = sprite_dict['update']
-        else:
-            loc = sprite_dict['update_function']
-        f = open(loc, 'r')
-        l = f.readlines()
-        f.close()
-        spr.update_func = ''.join(l)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT:
+                        lv.remove_sprite(lv.sprites[0])
+                        ID += 1
+                        if ID > len(KEYS) - 1:
+                            ID = 0
+                        lv.add_sprite(SPRITE_LIBRARY[KEYS[ID]])
+                        lv.sprites[0].pos = [120, 300]
+                        lv.sprites[0].scale = 2
+                        ANIMS = lv.sprites[0].animations.keys()
+                        ANIMS.sort()
+                        SELECTED = 0
 
-    for k in temp_variable.keys():
-        spr.temp_variable[k] = temp_variable[k]
+                    if event.key == pygame.K_LEFT:
+                        lv.remove_sprite(lv.sprites[0])
+                        ID -= 1
+                        if ID < 0:
+                            ID = len(KEYS) - 1
+                        lv.add_sprite(SPRITE_LIBRARY[KEYS[ID]])
+                        lv.sprites[0].pos = [120, 300]
+                        lv.sprites[0].scale = 2
+                        ANIMS = lv.sprites[0].animations.keys()
+                        ANIMS.sort()
+                        SELECTED = 0
 
-    return spr
+                    if event.key == pygame.K_UP:
+                        SELECTED -= 1
+                        if SELECTED < 0:
+                            SELECTED = len(ANIMS) - 1
+
+                    if event.key == pygame.K_DOWN:
+                        SELECTED += 1
+                        if SELECTED > len(ANIMS) - 1:
+                            SELECTED = 0
+
+                    if event.key in [pygame.K_SPACE, pygame.K_RETURN] and len(ANIMS) > 0:
+                        lv.sprites[0].stop_animation()
+                        lv.sprites[0].play_animation(ANIMS[SELECTED])
+
+                    if event.key == pygame.K_ESCAPE:
+                        lv.sprites[0].stop_animation()
+
+                    if event.key == pygame.K_TAB:
+                        lv.sprites[0].flip[0] = not lv.sprites[0].flip[0]
+
+                    if event.key in [pygame.K_p, pygame.K_PAUSE]:
+                        if lv.sprites[0].paused:
+                            lv.sprites[0].unpause_animation()
+                        else:
+                            lv.sprites[0].pause_animation()
+
+        pygame.quit()
+
+    except Exception as e:
+        pygame.quit()
+
+        print "The SGE Sprite Viewer has crashed from the following exception:"
+        print "----------------------------------------------------------------"
+        print traceback.format_exc()
+        print "________________________________________________________________"
+        raw_input("Press [ENTER] to exit")

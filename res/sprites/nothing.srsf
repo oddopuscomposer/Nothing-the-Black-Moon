@@ -1,7 +1,11 @@
 id=nothing
-img=char/nothingidle.png
 spritewidth=5
 spriteheight=1
+img=char/nothingidle.png
 animation=idle,3,100
+animation=sad,2,100
 animation=idle_front,0,100
 animation=idle_back,4,100
+animation=walk_forward,spritesheet<char/nothingforward.png|4|1>,135
+animation=walk_back,spritesheet<char/nothingback.png|4|1>,135
+animation=walk,spritesheet<char/nothingwalk.png|4|1>,135
