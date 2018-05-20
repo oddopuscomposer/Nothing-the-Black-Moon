@@ -1,12 +1,13 @@
 import sys, os
-BUILD_VERSION = '0.0.1'
+BUILD_VERSION = '0.0.2'
 
 # Command line arguments
 if len(sys.argv) > 1:
     args = sys.argv[1:]
 
 # Import everything else
-import pygame, sys, time, traceback
+import pygame, sys, time, traceback, numpy
+from PIL import Image
 from screeninfo import get_monitors
 from level import *
 from intro_level import IntroLevel
@@ -18,7 +19,8 @@ pygame.mixer.init()
 
 WIDTH, HEIGHT = 1280, 720
 FULLSCREEN = False
-KEYS = {'fullscreen': pygame.K_F11}
+KEYS = {'fullscreen': [pygame.K_F11],
+        'debug':      [pygame.K_F4]}
 
 # INITIALIZE THE SCREEN
 if FULLSCREEN:
@@ -33,11 +35,27 @@ pygame.display.set_caption("Nothing & the Black Moon")
 running = True
 level = IntroLevel()
 
+C = pygame.time.Clock()
+TRUE_FPS = 60
 FPS = 60
 ELAPSED = time.time()
 
+# Filters
+def BlackAndWhite(surf):
+    pil_str = pygame.image.tostring(surf, 'RGBA')
+    pil_img = Image.frombytes('RGBA', surf.get_size(), pil_str)
+    grey = pil_img.convert('LA').convert('RGBA')
+    pil_str = grey.tobytes('raw', 'RGBA')
+    return pygame.image.fromstring(pil_str, surf.get_size(), 'RGBA')
+FILTER = BlackAndWhite
+
 # Error catching
 EXC = None
+
+# Debug info
+DEBUG = False
+DEBUG_FONT = pygame.font.Font('res/fonts/consolas.ttf', 32)
+DEBUG_FONT.set_italic(True)
 
 while running:
     if EXC == None:
@@ -48,6 +66,8 @@ while running:
             if level != None:
                 # Blit game to screen
                 level.animate(game_screen, FPS)
+                if FILTER != None:
+                    game_screen = FILTER(game_screen)
                 
                 # Scale the screen to fit resolution
                 ## figure out resolution first
@@ -62,6 +82,24 @@ while running:
                 FPS = 1 / (time.time() - ELAPSED)
             except ZeroDivisionError: pass
             ELAPSED = time.time()
+
+            TRUE_FPS = C.get_fps()
+            C.tick()
+
+            # Debug info
+            if DEBUG:
+                screen.blit(DEBUG_FONT.render("NBM build " + str(BUILD_VERSION), True, [0, 0, 0]), [12, 15])
+                screen.blit(DEBUG_FONT.render("NBM build " + str(BUILD_VERSION), True, [255, 255, 255]), [12, 12])
+
+                screen.blit(DEBUG_FONT.render("FPS: " + str(round(TRUE_FPS, 2)), True, [0, 0, 0]), [12, 45])
+                screen.blit(DEBUG_FONT.render("FPS: " + str(round(TRUE_FPS, 2)), True, [255, 128, 0]), [12, 42])
+
+                if FILTER == None:
+                    txt = 'None'
+                else:
+                    txt = FILTER.__name__
+                screen.blit(DEBUG_FONT.render("Filter: " + txt, True, [0, 0, 0]), [12, 75])
+                screen.blit(DEBUG_FONT.render("Filter: " + txt, True, [255, 255, 0]), [12, 72])
             
             pygame.display.flip()
 
@@ -71,7 +109,10 @@ while running:
                 if event.type == pygame.KEYDOWN:
                     if level != None:
                         level.keydown(event.key, event.unicode)
-                    if event.key == KEYS['fullscreen']:
+                        
+                    if event.key in KEYS['debug']:
+                        DEBUG = not DEBUG
+                    if event.key in KEYS['fullscreen']:
                         FULLSCREEN = not FULLSCREEN
 
                         if FULLSCREEN:
@@ -110,6 +151,9 @@ while running:
                     if not FULLSCREEN:
                         WIDTH, HEIGHT = event.w, event.h
                         screen = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
+                if event.type == pygame.USEREVENT: # Custom events
+                    if event.dict['event'].lower() in ['filter', 'changefilter', 'change_filter']:
+                        exec("FILTER = %s" % event.dict['filter'].__name__, globals(), locals())
         except KeyboardInterrupt:
             pass
         except Exception as e:
@@ -118,7 +162,7 @@ while running:
 
             level.add_text({'id': "Error Title",
                             'font': 'res/fonts/consolas.ttf',
-                            'text': "%s has crashed" % (pygame.display.get_caption()[0]),
+                            'text': "%s has crashed" % ("Nothing & the Black Moon"),
                             'size': 42,
                             'color': [0, 0, 0],
                             'alignment': [0.5, 0.5],
