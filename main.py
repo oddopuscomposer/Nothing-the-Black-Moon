@@ -48,7 +48,7 @@ def BlackAndWhite(surf):
     grey = pil_img.convert('LA').convert('RGBA')
     pil_str = grey.tobytes('raw', 'RGBA')
     return pygame.image.fromstring(pil_str, surf.get_size(), 'RGBA')
-FILTER = BlackAndWhite
+FILTER = None
 
 # Error catching
 EXC = None
